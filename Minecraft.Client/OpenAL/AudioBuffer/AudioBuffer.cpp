@@ -12,6 +12,13 @@
 AudioBuffer::AudioBuffer(SoundDevice* soundDevice){
     pSoundDevice = soundDevice;
 }
+AudioBuffer::~AudioBuffer(){
+    for (auto id : mAudioBuffer){
+        alDeleteBuffers(1, &id.second);
+    }
+    mAudioBuffer.clear();
+    mAudioBuffer_REVERSE.clear();
+}
 
 // In order to make this function, I watched this video https://www.youtube.com/watch?v=kWQM1iQ1W0E
 AudioBuffer* AudioBuffer::createAudioBuffer(SoundDevice* soundDevice){
@@ -76,6 +83,8 @@ ALuint AudioBuffer::addAudio(std::string path){
     pSoundDevice->freeCurrentContext();
 
     mAudioBuffer.try_emplace(path, buffer);
+    mAudioBuffer_REVERSE.try_emplace(buffer, path);
+
     return buffer;
 }
 
@@ -83,3 +92,18 @@ ALuint AudioBuffer::getAudio(std::string path){
     if (mAudioBuffer.find(path) == mAudioBuffer.end()) return -1;
     return mAudioBuffer.at(path);
 }
+
+void AudioBuffer::removeAudio(std::string path){
+    if (mAudioBuffer.find(path) == mAudioBuffer.end()) throw "-- AUDIO BUFFER -- : CANNOT DELETE, PATH " + path + " DOESNT EXISTS"; 
+
+    mAudioBuffer_REVERSE.erase(mAudioBuffer[path]);
+    mAudioBuffer.erase(path);
+}
+void AudioBuffer::removeAudio(ALuint id){
+    if (mAudioBuffer_REVERSE.find(id) == mAudioBuffer_REVERSE.end()) throw "-- AUDIO BUFFER -- : CANNOT DELETE, SOUND ID " + std::to_string(id) + " DOESNT EXISTS"; 
+
+    mAudioBuffer.erase(mAudioBuffer_REVERSE[id]);
+    mAudioBuffer_REVERSE.erase(id);
+}
+
+ALuint removeAudio(ALuint id);
