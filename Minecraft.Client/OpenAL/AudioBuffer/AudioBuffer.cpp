@@ -13,11 +13,15 @@ AudioBuffer::AudioBuffer(SoundDevice* soundDevice){
     pSoundDevice = soundDevice;
 }
 AudioBuffer::~AudioBuffer(){
+    pSoundDevice->setCurrentContext();
+
     for (auto id : mAudioBuffer){
         alDeleteBuffers(1, &id.second);
     }
     mAudioBuffer.clear();
     mAudioBuffer_REVERSE.clear();
+
+    pSoundDevice->freeCurrentContext();
 }
 
 // In order to make this function, I watched this video https://www.youtube.com/watch?v=kWQM1iQ1W0E
@@ -105,5 +109,3 @@ void AudioBuffer::removeAudio(ALuint id){
     mAudioBuffer.erase(mAudioBuffer_REVERSE[id]);
     mAudioBuffer_REVERSE.erase(id);
 }
-
-ALuint removeAudio(ALuint id);

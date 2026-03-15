@@ -21,5 +21,7 @@ public:
     AudioSource& setPitch(float pitch);
     AudioSource& setVolume(float volume);
 
+    bool isPlaying();
+
     ALuint mSourceID;
 };
