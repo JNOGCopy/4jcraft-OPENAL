@@ -60,6 +60,7 @@ client = executable('Minecraft.Client',
     thread_dep,
     thread_dep,
     dependency('zlib'),
+    dependency('openal')
   ],
   cpp_args : global_cpp_args + global_cpp_defs + [
     '-DUNICODE', '-D_UNICODE',
