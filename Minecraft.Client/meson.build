@@ -58,6 +58,7 @@ client_dependencies = [
     thread_dep,
     dependency('zlib'),
     dependency('openal'),
+    dependency('sndfile'),
 ]
 
 if get_option('enable_vsync')

@@ -3,6 +3,7 @@
 #include <AL/alc.h>
 #include <AL/al.h>
 
+#include <cstddef>
 #include <memory>
 
 SoundDevice::SoundDevice(ALCdevice* alcDevice, ALCcontext* alcContext){
@@ -22,6 +23,9 @@ SoundDevice* SoundDevice::createSoundDevice(){
     if (!context) throw("-- AUDIO SOURCE -- : CANNOT CREATE CONTEXT"); 
 }
 
+void SoundDevice::freeCurrentContext(){
+    alcMakeContextCurrent(NULL);
+}
 void SoundDevice::setCurrentContext(){
     alcMakeContextCurrent(pAlcContext);
 }
