@@ -1,6 +1,10 @@
 ﻿#include "../../Minecraft.World/Platform/stdafx.h"
 
 #include "SoundEngine.h"
+#include <AL/al.h>
+#include <cstddef>
+#include <exception>
+#include <memory>
 #include "../Consoles_App.h"
 #include "../../Minecraft.Client/Player/MultiPlayerLocalPlayer.h"
 #include "../../Minecraft.World/Headers/net.minecraft.world.level.h"
@@ -27,18 +31,74 @@
 // take out Orbis until they are done
 #if defined _XBOX || defined(__linux__)
 
+#include "SoundPaths.h"
+
+#include "../../../OpenAL/AudioSourcePool/AudioSourcePool.hpp"
+#include "../../../OpenAL/AudioSource/AudioSource.hpp"
+#include "../../../OpenAL/AudioBuffer/AudioBuffer.hpp"
+#include "../../../OpenAL/SoundDevice/SoundDevice.hpp"
+
+#include <random>
+
 SoundEngine::SoundEngine() {}
 void SoundEngine::init(Options *pOptions)
 {
+	pSoundDevice = std::unique_ptr<SoundDevice>(SoundDevice::createSoundDevice());
+	pAudioBuffer = std::unique_ptr<AudioBuffer>(new AudioBuffer());
+	pAudioSourcePool = std::unique_ptr<AudioSourcePool>(AudioSourcePool::createAudioSourcePool());
+
+	std::string basePath = "Common/Sounds/Minecraft/";
+	std::string format = ".ogg";
+
+	for (int i = 0; i < paths.size(); i++){
+		for (std::string path : paths[i]){
+			std::string finalPath = basePath + path + format;
+			app.DebugPrintf("-- SOUND ENGINE -- : Adding audio - %s\n", finalPath.c_str());
+			pAudioBuffer->addAudio(finalPath, path); // Why am so stupid, i was trying to add the final path as string, normal that doesnt work
+		}
+	}
 }
 
 void SoundEngine::tick(std::shared_ptr<Mob> *players, float a)
 {
+	if (!players) return;
+	if (players[0] == NULL) return;
+
+	float x=players[0]->xo + (players[0]->x - players[0]->xo) * a;
+	float y=players[0]->yo + (players[0]->y - players[0]->yo) * a;
+	float z=players[0]->zo + (players[0]->z - players[0]->zo) * a;
+
+	float yRot = (players[0]->yRotO + (players[0]->yRot - players[0]->yRotO) * a) * Mth::RAD_TO_GRAD;
+	float xRot = (players[0]->xRotO + (players[0]->xRot - players[0]->xRotO) * a) * Mth::RAD_TO_GRAD;
+
+	// SOURCE = https://gamedev.stackexchange.com/questions/190054/how-to-calculate-the-forward-up-right-vectors-using-the-rotation-angles
+	float forwardX = cos(xRot) * sin(yRot);
+	float forwardY = -sin(xRot);
+	float forwardZ = cos(xRot) * cos(yRot);
+
+	float orientation[] = {
+		forwardX, forwardY, forwardZ, 0.0f, 1.0f, 0.0f
+	};
+
+	alListener3f(AL_POSITION, x, y, z);
+	alListenerfv(AL_ORIENTATION, orientation);
+
+	pAudioSourcePool->tick();
 }
 void SoundEngine::destroy() {}
 void SoundEngine::play(int iSound, float x, float y, float z, float volume, float pitch)
-{
+{ 
+	// From https://stackoverflow.com/questions/44615692/alternatives-to-using-rand-function-in-c
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> dis(0, paths[iSound].size()-1);
+
 	app.DebugPrintf("PlaySound - %d\n",iSound);
+	AudioSourceConfig config = {
+		x, y, z, 1, 1
+	};
+	
+	pAudioSourcePool->playSound(AudioSourceConfig(), pAudioBuffer->getAudio(paths[iSound][dis(gen)]));
 }
 void SoundEngine::playStreaming(const std::wstring& name, float x, float y , float z, float volume, float pitch, bool bMusicDelay) {}
 void SoundEngine::playUI(int iSound, float volume, float pitch) {}

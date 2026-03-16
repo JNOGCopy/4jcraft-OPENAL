@@ -5,15 +5,15 @@
 #include <climits>
 #include <cstddef>
 #include <cstdlib>
+#include <stdexcept>
 #include <string>
 
 #include "../SoundDevice/SoundDevice.hpp"
 
-AudioBuffer::AudioBuffer(SoundDevice* soundDevice){
-    pSoundDevice = soundDevice;
+AudioBuffer::AudioBuffer(){
+    
 }
 AudioBuffer::~AudioBuffer(){
-    pSoundDevice->setCurrentContext();
 
     for (auto id : mAudioBuffer){
         alDeleteBuffers(1, &id.second);
@@ -21,18 +21,17 @@ AudioBuffer::~AudioBuffer(){
     mAudioBuffer.clear();
     mAudioBuffer_REVERSE.clear();
 
-    pSoundDevice->freeCurrentContext();
+}
+
+AudioBuffer* AudioBuffer::createAudioBuffer(){
+   return new AudioBuffer();
 }
 
 // In order to make this function, I watched this video https://www.youtube.com/watch?v=kWQM1iQ1W0E
-AudioBuffer* AudioBuffer::createAudioBuffer(SoundDevice* soundDevice){
-   return new AudioBuffer(soundDevice);
-}
-
 /*!
  * ONLY COMPATIBLE WITH .OGG!!!!!
  */
-ALuint AudioBuffer::addAudio(std::string path){
+ALuint AudioBuffer::addAudio(std::string path, std::string identifier){
     ALenum          error, format;
     ALuint          buffer;
     SNDFILE*        sndFile;
@@ -42,10 +41,10 @@ ALuint AudioBuffer::addAudio(std::string path){
     ALsizei         numberOfBytes;
     
     sndFile = sf_open(path.c_str(), SFM_READ, &sfInfo);
-    if (!sndFile) { throw "-- AUDIO BUFFER -- : AUDIO WASN'T FOUNDED: " + path; }
+    if (!sndFile) { /*throw "-- AUDIO BUFFER -- : AUDIO WASN'T FOUNDED: " + path;*/ }
     if (sfInfo.frames < 1 || sfInfo.frames > (sf_count_t)(INT_MAX / sizeof(short)) / sfInfo.channels){
         sf_close(sndFile);
-        throw "-- AUDIO BUFFER -- : BAD SAMPLE COUNT!: " + path; 
+        throw std::invalid_argument("-- AUDIO BUFFER -- : BAD SAMPLE COUNT!: " + path); 
     }
 
     format = AL_NONE;
@@ -55,7 +54,7 @@ ALuint AudioBuffer::addAudio(std::string path){
         case 2: format = AL_FORMAT_STEREO16; break;
     }
 
-    if (!format) { sf_close(sndFile); throw  "-- AUDIO BUFFER -- : UNSUPPORTED CHANNEL! : " + path; }
+    if (!format) { sf_close(sndFile); throw std::invalid_argument("-- AUDIO BUFFER -- : UNSUPPORTED CHANNEL! : " + path); }
 
     memoryBuffer = static_cast<short*>(malloc((size_t)(sfInfo.frames * sfInfo.channels) * sizeof(short)));
     numberOfFrames = sf_read_short(sndFile, memoryBuffer, sfInfo.frames);
@@ -63,12 +62,10 @@ ALuint AudioBuffer::addAudio(std::string path){
     if (numberOfFrames < 1){
         free(memoryBuffer);
         sf_close(sndFile);
-        throw  "-- AUDIO BUFFER -- : FAILED READING SAMPLE : " + path;
+        throw  std::invalid_argument("-- AUDIO BUFFER -- : FAILED READING SAMPLE : " + path);
     }
 
     numberOfBytes = (ALsizei)(numberOfFrames * sfInfo.channels) * (ALsizei)sizeof(short);
-
-    pSoundDevice->setCurrentContext();
 
     buffer = 0;
     alGenBuffers(1, &buffer);
@@ -81,27 +78,25 @@ ALuint AudioBuffer::addAudio(std::string path){
     if (error != AL_NO_ERROR){
         if (buffer && alIsBuffer(buffer))
             alDeleteBuffers(1, &buffer);
-        throw "-- AUDIO BUFFER -- : OPENAL ERROR GENERATING BUFFER : " + std::to_string(error);
+        throw std::invalid_argument("-- AUDIO BUFFER -- : OPENAL ERROR GENERATING BUFFER : " + std::to_string(error));
     }
 
-    pSoundDevice->freeCurrentContext();
-
-    mAudioBuffer.try_emplace(path, buffer);
-    mAudioBuffer_REVERSE.try_emplace(buffer, path);
+    mAudioBuffer.try_emplace(identifier, buffer);
+    mAudioBuffer_REVERSE.try_emplace(buffer, identifier);
 
     return buffer;
 }
 
-ALuint AudioBuffer::getAudio(std::string path){
-    if (mAudioBuffer.find(path) == mAudioBuffer.end()) return -1;
-    return mAudioBuffer.at(path);
+ALuint AudioBuffer::getAudio(std::string identifier){
+    if (mAudioBuffer.find(identifier) == mAudioBuffer.end()) return -1;
+    return mAudioBuffer.at(identifier);
 }
 
-void AudioBuffer::removeAudio(std::string path){
-    if (mAudioBuffer.find(path) == mAudioBuffer.end()) throw "-- AUDIO BUFFER -- : CANNOT DELETE, PATH " + path + " DOESNT EXISTS"; 
+void AudioBuffer::removeAudio(std::string identifier){
+    if (mAudioBuffer.find(identifier) == mAudioBuffer.end()) throw "-- AUDIO BUFFER -- : CANNOT DELETE, PATH " + identifier + " DOESNT EXISTS"; 
 
-    mAudioBuffer_REVERSE.erase(mAudioBuffer[path]);
-    mAudioBuffer.erase(path);
+    mAudioBuffer_REVERSE.erase(mAudioBuffer[identifier]);
+    mAudioBuffer.erase(identifier);
 }
 void AudioBuffer::removeAudio(ALuint id){
     if (mAudioBuffer_REVERSE.find(id) == mAudioBuffer_REVERSE.end()) throw "-- AUDIO BUFFER -- : CANNOT DELETE, SOUND ID " + std::to_string(id) + " DOESNT EXISTS"; 

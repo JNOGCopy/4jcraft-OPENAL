@@ -163,6 +163,10 @@ private:
 	int m_iStream_CD_1;
 	bool *m_bHeardTrackA;
 
+	std::unique_ptr<SoundDevice> pSoundDevice;
+	std::unique_ptr<AudioBuffer> pAudioBuffer;
+	std::unique_ptr<AudioSourcePool> pAudioSourcePool;
+
 #ifdef __ORBIS__
 	int32_t m_hBGMAudio;
 #endif

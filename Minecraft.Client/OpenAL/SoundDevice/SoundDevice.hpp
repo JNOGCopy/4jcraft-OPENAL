@@ -11,7 +11,6 @@ public:
     ~SoundDevice();
 
     static SoundDevice* createSoundDevice(); // Factory pattern
-    static void freeCurrentContext();
     void setCurrentContext();
 
     // It seems that you can't make a unique ptr of these both, comprensible

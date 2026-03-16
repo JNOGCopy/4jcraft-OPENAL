@@ -4,7 +4,8 @@
 #include <AL/al.h>
 
 #include <cstddef>
-#include <memory>
+#include <stdexcept>
+#include <string>
 
 SoundDevice::SoundDevice(ALCdevice* alcDevice, ALCcontext* alcContext){
     pAlcDevice = alcDevice;
@@ -16,16 +17,24 @@ SoundDevice::~SoundDevice(){
 }
 
 SoundDevice* SoundDevice::createSoundDevice(){
-    ALCdevice* device = alcOpenDevice(nullptr);
-    if (!device) throw("-- AUDIO SOURCE -- : CANNOT OPEN DEVICE");
+    ALenum error;
 
-    ALCcontext* context = alcCreateContext(device, nullptr);
-    if (!context) throw("-- AUDIO SOURCE -- : CANNOT CREATE CONTEXT"); 
-}
+    ALCdevice* device = alcOpenDevice(NULL);
+    if (!device) { 
+        app.DebugPrintf("-- SOUND DEVICE -- : CANNOT OPEN DEVICE %i\n", error);
+        throw std::invalid_argument("-- SOUND DEVICE -- : CANNOT OPEN DEVICE " + std::to_string(error)); 
+    }
 
-void SoundDevice::freeCurrentContext(){
-    alcMakeContextCurrent(NULL);
-}
-void SoundDevice::setCurrentContext(){
-    alcMakeContextCurrent(pAlcContext);
+    ALCcontext* context = alcCreateContext(device, NULL);
+    if (!context) {
+        app.DebugPrintf("-- SOUND DEVICE -- : CANNOT CREATE CONTEXT %i\n", error);
+        throw std::invalid_argument("-- SOUND DEVICE -- : CANNOT CREATE CONTEXT " + std::to_string(error));
+    }
+
+    if (!alcMakeContextCurrent(context)){
+        app.DebugPrintf("-- SOUND DEVICE -- : CANT MAKE ALC CURRENT CONTEXT %i\n", error);
+        throw std::invalid_argument("-- SOUND DEVICE -- : CANNOT MAKE CONTEXT CURRENT " + std::to_string(error));
+    }
+
+    return new SoundDevice(device, context);
 }

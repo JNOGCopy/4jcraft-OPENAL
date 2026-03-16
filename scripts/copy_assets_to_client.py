@@ -47,6 +47,11 @@ shutil.copytree(
     src_assets / "DurangoMedia" / "Sound", 
     client_build_dir / "Sound"
 )
+# Copy sounds into build
+shutil.copytree(
+    src_assets / "Sounds" / "Sound", 
+    client_build_dir / "Common" / "Sounds"
+)
 
 # copy DLC
 # XXX: The DLC path is handled inside of 4JLibs, the Windows64 build expects `DurangoMedia/DLC` to load DLC data from

@@ -9,16 +9,14 @@ class SoundDevice;
 
 struct AudioSourceConfig{
     float xPos = 0, yPos = 0, zPos = 0;
-    float pitch = 0;
-    float volume = 0;
+    float pitch = 1;
+    float volume = 1;
 };
 
 class AudioSourcePool{
 private:
-    AudioSourcePool(SoundDevice* soundDevice);
+    AudioSourcePool();
     int getFreeAudioSource();
-
-    SoundDevice* pSoundDevice;
 
     // IF YOU DELETE ONE, IT BROKES -- TO FIX -- CHANGE TO ARRAY OR SOMETHING
     std::vector<std::unique_ptr<AudioSource>> mAudioSourcePool;
@@ -26,7 +24,7 @@ private:
     std::vector<int> mFreeAudioSource;
     std::vector<int> mUsingAudioSource;
 public:
-    AudioSourcePool* createAudioSourcePool(SoundDevice* soundDevice);
+    static AudioSourcePool* createAudioSourcePool();
 
     void playSound(const AudioSourceConfig audioConfig, ALuint soundId);
     void tick();

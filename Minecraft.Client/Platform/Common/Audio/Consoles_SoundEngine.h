@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "../../Minecraft.World/Util/SoundTypes.h"
 
 #ifdef _XBOX
@@ -24,6 +25,11 @@
 #define _SEKRIT2
 #include "../../Minecraft.Client/Platform/Orbis/Miles/include/mss.h"
 #endif
+
+class AudioSourcePool;
+class AudioSource;
+class SoundDevice;
+class AudioBuffer;
 
 typedef struct
 {

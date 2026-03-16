@@ -5,15 +5,14 @@ class SoundDevice;
 
 class AudioSource{
 private:
-    AudioSource(ALuint sourceID, SoundDevice* soundDevice);
-    SoundDevice* pSoundDevice;
+    AudioSource(ALuint sourceID);
 public:
     ~AudioSource();
 
-    static AudioSource* createAudioSource(SoundDevice* soundDevice);
+    static AudioSource* createAudioSource();
 
     void play(ALuint id);
-    void stop(ALuint id);
+    void stop();
 
     // build pattern!
 

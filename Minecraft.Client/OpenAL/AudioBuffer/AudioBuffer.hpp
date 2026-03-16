@@ -11,17 +11,16 @@ class SoundDevice;
 
 class AudioBuffer{
 private:
-    AudioBuffer(SoundDevice* soundDevice);
 
     std::unordered_map<std::string, ALuint> mAudioBuffer; // PATH ---> AUDIO ID (OpenAL)
     std::unordered_map<ALuint, std::string> mAudioBuffer_REVERSE; // AUDIO ID (OpenAL) ---> PATH
-    SoundDevice* pSoundDevice;
 public:
-    AudioBuffer* createAudioBuffer(SoundDevice* soundDevice);
-    ALuint addAudio(std::string path);
-    ALuint getAudio(std::string path);
+    AudioBuffer();
+    static AudioBuffer* createAudioBuffer();
+    ALuint addAudio(std::string path, std::string identifier);
+    ALuint getAudio(std::string identifier);
 
-    void removeAudio(std::string path);
+    void removeAudio(std::string identifier);
     void removeAudio(ALuint id);
 
     ~AudioBuffer();
